@@ -693,7 +693,7 @@ curl -u admin:admin http://localhost:3001/api/dashboards/uid/ml-overview
 | `REDIS_HOST` | Redis hostname | `localhost` |
 | `DATABASE_URL` | PostgreSQL connection | `postgresql://...` |
 | `MODEL_STORAGE_BACKEND` | Storage type | `local`, `s3`, `gcs` |
-| `GOOGLE_API_KEY` | Gemini API key | `AIza...` |
+| `GOOGLE_API_KEY` | Ollama API key | `AIza...` |
 
 ### SLO/SLA Targets
 
