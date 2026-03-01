@@ -204,8 +204,10 @@ class ModelEvaluator:
             "model": "llm_advisor",
             "metrics": metrics,
             "thresholds": {
+                # Only include thresholds that are actually evaluated.
+                # safety_score is not computed here; add it once a safety metric
+                # (e.g. content-safety classifier) is integrated.
                 "relevance_score": self.thresholds.llm_relevance_score,
-                "safety_score": self.thresholds.llm_safety_score,
             },
             "passed": passed,
         }
