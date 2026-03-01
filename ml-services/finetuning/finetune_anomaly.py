@@ -14,7 +14,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -27,7 +27,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     precision_score, recall_score, f1_score,
     roc_auc_score, classification_report,
-    precision_recall_curve, average_precision_score
+    average_precision_score
 )
 from sklearn.model_selection import StratifiedKFold
 
@@ -51,8 +51,12 @@ def load_transaction_data(data_path: str) -> pd.DataFrame:
     return df
 
 
-def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Engineer features for anomaly detection."""
+def engineer_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
+    """Engineer features for anomaly detection.
+
+    Returns:
+        Tuple of (feature DataFrame, list of available feature column names).
+    """
     feat = df.copy()
     
     # Time features
@@ -163,8 +167,11 @@ def finetune_anomaly_detector(
             skf = StratifiedKFold(n_splits=config.cross_val_folds, shuffle=True, random_state=42)
             f1_scores = []
             
-            for train_idx, val_idx in skf.split(X_scaled, y):
-                X_tr, X_val = X_scaled[train_idx], X_scaled[val_idx]
+            for train_idx, val_idx in skf.split(X, y):
+                # Fit scaler only on training fold to avoid data leakage
+                fold_scaler = StandardScaler()
+                X_tr = fold_scaler.fit_transform(X[train_idx])
+                X_val = fold_scaler.transform(X[val_idx])
                 y_val = y[val_idx]
                 
                 model = IsolationForest(
@@ -259,7 +266,7 @@ def finetune_anomaly_detector(
             json.dump(feature_cols, f)
         
         mlflow.sklearn.log_model(model, "model")
-        mlflow.log_artifact(model_path)
+        mlflow.log_artifacts(model_path, artifact_path="best_model")
         
         # Eval results
         eval_dir = EVAL_RESULTS_DIR / "anomaly_detector"
