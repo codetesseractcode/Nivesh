@@ -448,7 +448,13 @@ services:
       - ollama
     networks:
       - nivesh-network
-    command: npm run dev
+    command: pnpm run dev
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # ==========================================
   # Local LLM Server (Ollama)
