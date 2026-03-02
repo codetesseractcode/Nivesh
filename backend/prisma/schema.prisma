@@ -619,3 +619,102 @@ model TrainingDataset {
   @@index([modelType])
   @@index([createdAt])
 }
+
+// ==========================================
+// Payments
+// ==========================================
+model Payment {
+  id                String      @id @default(uuid())
+  userId            String
+  orderId           String      @unique
+  
+  // Payment details
+  amount            Decimal     @db.Decimal(15, 2)
+  currency          String      @default("INR")
+  status            String      @default("CREATED") // CREATED, PENDING, AUTHORIZED, CAPTURED, REFUNDED, PARTIALLY_REFUNDED, FAILED, CANCELLED
+  method            String?     // CARD, UPI, NETBANKING, WALLET, EMI
+  description       String
+  
+  // Gateway details
+  gatewayPaymentId  String?
+  gatewayOrderId    String?
+  gatewaySignature  String?
+  
+  // Customer details
+  customerEmail     String?
+  customerPhone     String?
+  
+  // Error info
+  errorCode         String?
+  errorDescription  String?
+  
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("payments")
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([orderId])
+}
+
+// ==========================================
+// Simulations (Monte Carlo & What-if)
+// ==========================================
+model Simulation {
+  id                String      @id @default(uuid())
+  userId            String
+  
+  // Simulation details
+  name              String
+  type              String      // MONTE_CARLO, WHAT_IF, STRESS_TEST
+  scenario          String?     // Description of the scenario
+  
+  // Input parameters
+  inputParameters   Json        // { initialAmount, monthlyContribution, duration, riskLevel, inflationRate, ... }
+  
+  // Results
+  results           Json?       // { projectedValues, percentiles, bestCase, worstCase, median, ... }
+  status            String      @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime    @default(now())
+  completedAt       DateTime?
+  
+  @@map("simulations")
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([status])
+}
+
+// ==========================================
+// Alert Rules (User-defined alert configurations)
+// ==========================================
+model AlertRule {
+  id                String      @id @default(uuid())
+  userId            String
+  
+  // Rule details
+  name              String
+  ruleType          String      // BUDGET_THRESHOLD, GOAL_DEADLINE, ANOMALY, PRICE_ALERT, CUSTOM
+  conditions        Json        // { threshold, metric, operator, value, ... }
+  
+  // Actions
+  actions           Json        // { notifyPush, notifyEmail, notifySms, ... }
+  
+  // Status
+  isActive          Boolean     @default(true)
+  lastTriggeredAt   DateTime?
+  triggerCount      Int         @default(0)
+  
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("alert_rules")
+  @@index([userId, isActive])
+  @@index([ruleType])
+}
