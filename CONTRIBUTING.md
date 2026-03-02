@@ -7,6 +7,7 @@ Thank you for considering contributing to Nivesh! This guide will help you get s
 - [Code of Conduct](#code-of-conduct)
 - [How Can I Contribute?](#how-can-i-contribute)
 - [Development Setup](#development-setup)
+- [Security & Pre-commit Hooks](#security--pre-commit-hooks)
 - [Coding Standards](#coding-standards)
 - [Commit Guidelines](#commit-guidelines)
 - [Pull Request Process](#pull-request-process)
@@ -84,6 +85,47 @@ docker-compose up -d
 # Run database migrations
 npm run migrate
 ```
+
+---
+
+## Security & Pre-commit Hooks
+
+This project uses **pre-commit hooks** to prevent secrets and credentials from being accidentally committed.
+
+### Setup
+
+```bash
+# Install pre-commit (Python required)
+pip install pre-commit
+
+# Install the hooks into your local clone
+pre-commit install
+
+# (Optional) Run against all files to verify
+pre-commit run --all-files
+```
+
+### What the hooks check
+
+| Hook | Purpose |
+|------|---------|
+| `detect-secrets` | Scans staged files for API keys, passwords, tokens |
+| `detect-private-key` | Blocks commits containing private key material |
+| `check-added-large-files` | Prevents files > 500 KB from being committed |
+| `check-merge-conflict` | Catches leftover merge-conflict markers |
+| `no-commit-to-branch` | Blocks direct commits to `main` |
+
+### Environment variables
+
+Never hard-code secrets — use environment variables instead:
+
+```bash
+# Copy the template and fill in real values
+cp .env.example .env                         # backend
+cp docker-compose.env.example .env           # Docker Compose
+```
+
+See [docs/SECURITY.md](docs/SECURITY.md) for the full secrets-management guide, including Kubernetes sealed-secrets, rotation schedules and incident-response procedures.
 
 ---
 
