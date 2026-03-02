@@ -21,6 +21,29 @@ async function bootstrap() {
   const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
+  // ── Security: Validate critical secrets at startup ──────────────
+  const jwtSecret = configService.get<string>('security.jwt.secret');
+  const encryptionKey = configService.get<string>('security.encryption.key');
+
+  if (nodeEnv === 'production') {
+    if (!jwtSecret || jwtSecret.length < 32) {
+      logger.error('FATAL: JWT_SECRET is not set or is too short (min 32 chars). Refusing to start.');
+      process.exit(1);
+    }
+    if (!encryptionKey || encryptionKey.length !== 32) {
+      logger.error('FATAL: ENCRYPTION_KEY is not set or is not exactly 32 chars. Refusing to start.');
+      process.exit(1);
+    }
+    logger.log('✅ Security secrets validated for production');
+  } else {
+    if (!jwtSecret) {
+      logger.warn('⚠️  JWT_SECRET is not set — using undefined. Set it in .env for proper auth.');
+    }
+    if (!encryptionKey) {
+      logger.warn('⚠️  ENCRYPTION_KEY is not set — using undefined. Set it in .env for encryption.');
+    }
+  }
+
   // Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
