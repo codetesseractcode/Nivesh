@@ -377,6 +377,27 @@ services:
       retries: 5
 
   # ==========================================
+  # Distributed Tracing (Jaeger)
+  # ==========================================
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: nivesh-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    networks:
+      - nivesh-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
   # Apache Airflow for ML Training Pipelines
   # ==========================================
 
@@ -527,6 +548,10 @@ services:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
       FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
+
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_SERVICE_NAME: nivesh-backend
     ports:
       - "3000:3000"
     volumes:
