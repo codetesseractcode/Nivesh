@@ -240,6 +240,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # Override production CMD with --reload for local development only
+    command: uvicorn model_server.app:app --host 0.0.0.0 --port 8000 --reload
 
   # ==========================================
   # Monitoring & Observability
