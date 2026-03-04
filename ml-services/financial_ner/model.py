@@ -129,7 +129,8 @@ class FinancialNER:
         if self.nlp is None:
             self.create_blank_model()
 
-        assert self.nlp is not None, "NLP model must be initialized before training"
+        if self.nlp is None:
+            raise RuntimeError("NLP model must be initialized before training")
 
         # Get NER component
         ner = self.nlp.get_pipe("ner")

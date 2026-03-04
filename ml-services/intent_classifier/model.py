@@ -118,7 +118,8 @@ class IntentClassifier:
 
         # Tokenize
         def tokenize_data(queries, labels):
-            assert self.tokenizer is not None, "Tokenizer not loaded"
+            if self.tokenizer is None:
+                raise RuntimeError("Tokenizer not loaded. Ensure the tokenizer is initialized before calling load_and_prepare_data.")
             encodings = self.tokenizer(
                 queries,
                 truncation=True,
@@ -200,7 +201,8 @@ class IntentClassifier:
         )
 
         # Trainer
-        assert self.model is not None, "Model not loaded. Call load_model() first."
+        if self.model is None:
+            raise RuntimeError("Model not loaded. Call load_model() first.")
         trainer = Trainer(
             model=self.model,  # type: ignore[arg-type]
             args=training_args,
@@ -218,7 +220,8 @@ class IntentClassifier:
 
         # Save model
         trainer.save_model(output_dir)
-        assert self.tokenizer is not None
+        if self.tokenizer is None:
+            raise RuntimeError("Tokenizer not loaded. Cannot save pretrained tokenizer.")
         self.tokenizer.save_pretrained(output_dir)
 
         logger.info(f"Training completed. Metrics: {eval_metrics}")
@@ -243,7 +246,8 @@ class IntentClassifier:
         logger.info("Evaluating model on test set")
 
         # Create trainer for evaluation
-        assert self.model is not None, "Model not loaded. Call load_model() first."
+        if self.model is None:
+            raise RuntimeError("Model not loaded. Call load_model() first.")
         trainer = Trainer(
             model=self.model,  # type: ignore[arg-type]
             compute_metrics=self.compute_metrics
@@ -361,7 +365,8 @@ class IntentClassifier:
         logger.info(f"Exporting model to ONNX: {output_path}")
 
         # Dummy input
-        assert self.tokenizer is not None, "Tokenizer not loaded"
+        if self.tokenizer is None:
+            raise RuntimeError("Tokenizer not loaded. Ensure the tokenizer is initialized before ONNX export.")
         dummy_input = self.tokenizer(
             "Example query",
             truncation=True,
@@ -371,7 +376,8 @@ class IntentClassifier:
         )
 
         # Export
-        assert self.model is not None, "Model not loaded"
+        if self.model is None:
+            raise RuntimeError("Model not loaded. Call load_model() before ONNX export.")
         torch.onnx.export(
             self.model,  # type: ignore[arg-type]
             (dummy_input['input_ids'], dummy_input['attention_mask']),

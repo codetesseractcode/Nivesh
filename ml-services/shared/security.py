@@ -318,17 +318,6 @@ def sanitize_log_data(data: dict) -> dict:
     return sanitized
 
 
-# Exception classes (use shared.exceptions.ValidationError for cross-module compatibility)
-class InputValidationError(Exception):
-    """Input validation error"""
-    pass
-
-
-class AuthenticationError(Exception):
-    """Authentication error"""
-    pass
-
-
-class RateLimitError(Exception):
-    """Rate limit exceeded"""
-    pass
+# Exception classes removed — use shared.exceptions.ValidationError,
+# shared.exceptions.AuthenticationError, and shared.exceptions.RateLimitError
+# for cross-module compatibility instead of defining duplicates here.

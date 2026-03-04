@@ -333,7 +333,7 @@ async def predict_intent(
                 min_length=3,
                 max_length=512
             )
-        except (ValidationError, ValueError) as e:
+        except ValidationError as e:
             track_invalid_input(model_name, "invalid_query")
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -378,7 +378,7 @@ async def predict_intent(
 
         return IntentClassificationResponse(**response)
 
-    except (ValidationError, ValueError) as e:
+    except ValidationError as e:
         logger.warning(f"Invalid input for intent classification: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except ModelNotLoadedError as e:
@@ -643,8 +643,6 @@ async def clear_cache():
 # ==========================================
 
 # Import drift detection router
-sys.path.insert(0, str(Path(__file__).parent.parent / 'drift_detection'))
-
 try:
     from drift_detection.drift_endpoints import router as drift_router
     app.include_router(drift_router)
