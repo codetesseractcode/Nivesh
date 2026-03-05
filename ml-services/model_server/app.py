@@ -393,7 +393,11 @@ async def predict_intent(
 
 @app.post("/predict/ner", response_model=NERResponse)
 @prediction_latency.labels(model_name='financial_ner').time()
-async def extract_entities(request: NERRequest):
+async def extract_entities(
+    request: NERRequest,
+    api_key: str = Depends(verify_api_key),
+    _rate_limit: None = Depends(check_rate_limit)
+):
     """
     Extract financial entities (MONEY, DATE, CATEGORY, MERCHANT, ACCOUNT)
     """
@@ -438,7 +442,11 @@ async def extract_entities(request: NERRequest):
 
 @app.post("/predict/spending", response_model=SpendingPredictionResponse)
 @prediction_latency.labels(model_name='spending_predictor').time()
-async def predict_spending(request: SpendingPredictionRequest):
+async def predict_spending(
+    request: SpendingPredictionRequest,
+    api_key: str = Depends(verify_api_key),
+    _rate_limit: None = Depends(check_rate_limit)
+):
     """
     Predict future spending using Prophet time series model
     Returns monthly spending forecasts with confidence intervals
@@ -502,7 +510,11 @@ async def predict_spending(request: SpendingPredictionRequest):
 
 @app.post("/predict/anomaly", response_model=AnomalyDetectionResponse)
 @prediction_latency.labels(model_name='anomaly_detector').time()
-async def detect_anomaly(request: AnomalyDetectionRequest):
+async def detect_anomaly(
+    request: AnomalyDetectionRequest,
+    api_key: str = Depends(verify_api_key),
+    _rate_limit: None = Depends(check_rate_limit)
+):
     """
     Detect anomalous transactions using Isolation Forest
     Returns anomaly flag, score, and threshold
@@ -549,7 +561,11 @@ async def detect_anomaly(request: AnomalyDetectionRequest):
 
 @app.post("/predict/credit-risk", response_model=CreditRiskResponse)
 @prediction_latency.labels(model_name='credit_risk_scorer').time()
-async def predict_credit_risk(request: CreditRiskRequest):
+async def predict_credit_risk(
+    request: CreditRiskRequest,
+    api_key: str = Depends(verify_api_key),
+    _rate_limit: None = Depends(check_rate_limit)
+):
     """
     Predict loan default risk using XGBoost classifier
     Returns risk score (0-100), risk category, and default probability
@@ -619,11 +635,16 @@ async def list_models():
 
 
 @app.post("/cache/clear")
-async def clear_cache():
+async def clear_cache(
+    api_key: str = Depends(verify_api_key)
+):
     """Clear all cached predictions"""
     try:
         # Clear Redis cache
         pattern = "pred:*"
+        if redis_client is None:
+            models_cache.clear()
+            return {"message": "Redis not available — cleared 0 cached predictions and all loaded models"}
         keys = redis_client.keys(pattern)
         if keys:
             redis_client.delete(*keys)
