@@ -45,7 +45,7 @@ export interface Transaction {
   transactionDate: string;
   referenceNumber?: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REVERSED';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -143,7 +143,7 @@ export interface Alert {
   message: string;
   isRead: boolean;
   actionUrl?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -154,18 +154,18 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   metadata?: {
-    charts?: any[];
-    actions?: any[];
-    citations?: any[];
+    charts?: unknown[];
+    actions?: unknown[];
+    citations?: unknown[];
   };
 }
 
 // Simulation Types
 export interface SimulationResult {
   type: 'emi' | 'retirement' | 'sip' | 'home_loan' | 'monte_carlo';
-  inputs: Record<string, any>;
-  outputs: Record<string, any>;
-  charts?: any[];
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  charts?: unknown[];
   createdAt: string;
 }
 

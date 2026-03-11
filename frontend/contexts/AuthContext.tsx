@@ -37,8 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setLoading(true);
       await signIn(email, password);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to login';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to login';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setLoading(true);
       await signUp(email, password);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to create account';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create account';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -65,8 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       await signOut();
       setUser(null);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to logout';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to logout';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -77,8 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setLoading(true);
       await signInWithGoogle();
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to login with Google';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to login with Google';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -90,8 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null);
       await resetPassword(email);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to send password reset email';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send password reset email';
       setError(errorMessage);
       throw new Error(errorMessage);
     }

@@ -112,7 +112,7 @@ class WebSocketManager {
   /**
    * Emit event to server
    */
-  emit(event: string, data: any): void {
+  emit(event: string, data: unknown): void {
     if (this.socket?.connected) {
       this.socket.emit(event, data);
     } else {
@@ -123,6 +123,7 @@ class WebSocketManager {
   /**
    * Listen to event from server
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string, callback: (...args: any[]) => void): void {
     this.socket?.on(event, callback);
   }
@@ -130,6 +131,7 @@ class WebSocketManager {
   /**
    * Remove event listener
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   off(event: string, callback?: (...args: any[]) => void): void {
     if (callback) {
       this.socket?.off(event, callback);
