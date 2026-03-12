@@ -107,7 +107,7 @@ services:
     networks:
       - nivesh-network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -351,8 +351,8 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        sed -e 's|${SLACK_WEBHOOK_URL[^}]*}|'"$SLACK_WEBHOOK_URL"'|g' \
-            -e 's|${PAGERDUTY_KEY[^}]*}|'"$PAGERDUTY_KEY"'|g' \
+        sed -e "s|SLACK_WEBHOOK_PLACEHOLDER|$$SLACK_WEBHOOK_URL|g" \
+            -e "s|PAGERDUTY_KEY_PLACEHOLDER|$$PAGERDUTY_KEY|g" \
             /etc/alertmanager/alertmanager.yml > /tmp/alertmanager.yml
         exec /bin/alertmanager \
           --config.file=/tmp/alertmanager.yml \

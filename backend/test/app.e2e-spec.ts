@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication } from "@nestjs/common";
+import request from "supertest";
+import { AppModule } from "./../src/app.module";
 
-describe('AppController (e2e)', () => {
+describe("AppController (e2e)", () => {
   let app: INestApplication;
 
   beforeEach(async () => {
@@ -19,22 +19,22 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/ (GET) - Health check', () => {
+  it("/ (GET) - Health check", () => {
     return request(app.getHttpServer())
-      .get('/api/v1/health')
+      .get("/api/v1/health")
       .expect(200)
       .expect((res) => {
-        expect(res.body).toHaveProperty('status', 'ok');
-        expect(res.body).toHaveProperty('timestamp');
-        expect(res.body).toHaveProperty('uptime');
+        expect(res.body).toHaveProperty("status", "ok");
+        expect(res.body).toHaveProperty("timestamp");
+        expect(res.body).toHaveProperty("uptime");
       });
   });
 
-  it('/health/ready (GET) - Readiness check', () => {
-    return request(app.getHttpServer()).get('/api/v1/health/ready').expect(200);
+  it("/health/ready (GET) - Readiness check", () => {
+    return request(app.getHttpServer()).get("/api/v1/health/ready").expect(200);
   });
 
-  it('/health/live (GET) - Liveness check', () => {
-    return request(app.getHttpServer()).get('/api/v1/health/live').expect(200);
+  it("/health/live (GET) - Liveness check", () => {
+    return request(app.getHttpServer()).get("/api/v1/health/live").expect(200);
   });
 });
