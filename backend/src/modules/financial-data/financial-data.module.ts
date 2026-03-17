@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
+import { Module } from "@nestjs/common";
+import { CqrsModule } from "@nestjs/cqrs";
+import { HttpModule } from "@nestjs/axios";
 
 // Controllers
-import { AccountController } from './presentation/account.controller';
-import { TransactionController } from './presentation/transaction.controller';
+import { AccountController } from "./presentation/account.controller";
+import { TransactionController } from "./presentation/transaction.controller";
 
 // Command Handlers
 import {
@@ -11,36 +12,37 @@ import {
   UpdateAccountHandler,
   DeleteAccountHandler,
   LinkAccountHandler,
-} from './application/commands/handlers/account.handlers';
+} from "./application/commands/handlers/account.handlers";
 import {
   CreateTransactionHandler,
   UpdateTransactionHandler,
   DeleteTransactionHandler,
-} from './application/commands/handlers/transaction.handlers';
+} from "./application/commands/handlers/transaction.handlers";
 
 // Query Handlers
 import {
   GetAccountHandler,
   GetAccountsByUserHandler,
   GetAllAccountsHandler,
-} from './application/queries/handlers/account.query-handlers';
+} from "./application/queries/handlers/account.query-handlers";
 import {
   GetTransactionHandler,
   GetTransactionsByAccountHandler,
   GetTransactionsByUserHandler,
   GetAllTransactionsHandler,
   GetRecentTransactionsHandler,
-} from './application/queries/handlers/transaction.query-handlers';
+} from "./application/queries/handlers/transaction.query-handlers";
 
 // Repositories
-import { AccountRepository } from './infrastructure/persistence/account.repository';
-import { TransactionRepository } from './infrastructure/persistence/transaction.repository';
-import { ACCOUNT_REPOSITORY } from './domain/repositories/account.repository.interface';
-import { TRANSACTION_REPOSITORY } from './domain/repositories/transaction.repository.interface';
+import { AccountRepository } from "./infrastructure/persistence/account.repository";
+import { TransactionRepository } from "./infrastructure/persistence/transaction.repository";
+import { ACCOUNT_REPOSITORY } from "./domain/repositories/account.repository.interface";
+import { TRANSACTION_REPOSITORY } from "./domain/repositories/transaction.repository.interface";
+import { MlCategorizationService } from "./infrastructure/services/ml-categorization.service";
 
 // Core modules
-import { DatabaseModule } from '../../core/database/database.module';
-import { MessagingModule } from '../../core/messaging/messaging.module';
+import { DatabaseModule } from "../../core/database/database.module";
+import { MessagingModule } from "../../core/messaging/messaging.module";
 
 const CommandHandlers = [
   // Account
@@ -68,7 +70,7 @@ const QueryHandlers = [
 ];
 
 @Module({
-  imports: [CqrsModule, DatabaseModule, MessagingModule],
+  imports: [CqrsModule, DatabaseModule, MessagingModule, HttpModule],
   controllers: [AccountController, TransactionController],
   providers: [
     // Repositories
@@ -80,10 +82,16 @@ const QueryHandlers = [
       provide: TRANSACTION_REPOSITORY,
       useClass: TransactionRepository,
     },
+    // Services
+    MlCategorizationService,
     // Handlers
     ...CommandHandlers,
     ...QueryHandlers,
   ],
-  exports: [ACCOUNT_REPOSITORY, TRANSACTION_REPOSITORY],
+  exports: [
+    ACCOUNT_REPOSITORY,
+    TRANSACTION_REPOSITORY,
+    MlCategorizationService,
+  ],
 })
-export class FinancialDataModule { }
+export class FinancialDataModule {}

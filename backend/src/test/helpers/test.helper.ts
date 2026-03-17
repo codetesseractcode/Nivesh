@@ -3,7 +3,7 @@
  * Provides common test utilities, factories, and helpers
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * UUID Generator for testing
@@ -49,7 +49,15 @@ export class TestDateHelper {
   }
 
   static endOfMonth(date: Date = new Date()): Date {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+    return new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
   }
 }
 
@@ -58,8 +66,9 @@ export class TestDateHelper {
  */
 export class TestDataGenerator {
   static randomString(length: number = 10): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -70,7 +79,11 @@ export class TestDataGenerator {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  static randomDecimal(min: number = 0, max: number = 100000, decimals: number = 2): number {
+  static randomDecimal(
+    min: number = 0,
+    max: number = 100000,
+    decimals: number = 2,
+  ): number {
     const value = Math.random() * (max - min) + min;
     return parseFloat(value.toFixed(decimals));
   }
@@ -84,7 +97,8 @@ export class TestDataGenerator {
   }
 
   static randomAccountNumber(): string {
-    return this.randomNumber(100000000000, 999999999999999999).toString();
+    // Max is capped at Number.MAX_SAFE_INTEGER to avoid precision loss
+    return this.randomNumber(100000000000, 999999999999999).toString();
   }
 
   static randomIFSCCode(): string {
@@ -102,24 +116,33 @@ export class TestDataGenerator {
  * Test assertion helpers
  */
 export class TestAssertions {
-  static assertDefined<T>(value: T | undefined | null, message?: string): asserts value is T {
+  static assertDefined<T>(
+    value: T | undefined | null,
+    message?: string,
+  ): asserts value is T {
     if (value === undefined || value === null) {
-      throw new Error(message || 'Expected value to be defined');
+      throw new Error(message || "Expected value to be defined");
     }
   }
 
   static assertUUID(value: string, message?: string): void {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(value)) {
       throw new Error(message || `Expected "${value}" to be a valid UUID`);
     }
   }
 
-  static assertDateInRange(date: Date, start: Date, end: Date, message?: string): void {
+  static assertDateInRange(
+    date: Date,
+    start: Date,
+    end: Date,
+    message?: string,
+  ): void {
     if (date < start || date > end) {
       throw new Error(
         message ||
-        `Expected date ${date.toISOString()} to be between ${start.toISOString()} and ${end.toISOString()}`,
+          `Expected date ${date.toISOString()} to be between ${start.toISOString()} and ${end.toISOString()}`,
       );
     }
   }

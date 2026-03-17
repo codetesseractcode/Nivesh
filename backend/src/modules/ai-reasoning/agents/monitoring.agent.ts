@@ -1,16 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { BaseAgent } from './base.agent';
-import { AgentMessage, AgentResponse, AgentType } from '../types/agent.types';
-import { ToolRegistry } from '../services/tool-registry.service';
-import { DecisionTraceService } from '../services/decision-trace.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { BaseAgent } from "./base.agent";
+import { AgentMessage, AgentResponse, AgentType } from "../types/agent.types";
+import { ToolRegistry } from "../services/tool-registry.service";
+import { DecisionTraceService } from "../services/decision-trace.service";
 
 /**
  * Alert Interface
  */
 interface Alert {
   id: string;
-  type: 'budget_overrun' | 'goal_deviation' | 'anomaly' | 'opportunity' | 'risk';
-  severity: 'critical' | 'warning' | 'info';
+  type:
+    | "budget_overrun"
+    | "goal_deviation"
+    | "anomaly"
+    | "opportunity"
+    | "risk";
+  severity: "critical" | "warning" | "info";
   title: string;
   description: string;
   timestamp: Date;
@@ -117,26 +122,23 @@ export class MonitoringAgent extends BaseAgent {
     this.logger.log(`Executing MonitoringAgent: ${task}`);
 
     try {
-      await this.recordReasoning(
-        `Starting monitoring task: ${task}`,
-        traceId,
-      );
+      await this.recordReasoning(`Starting monitoring task: ${task}`, traceId);
 
       let result;
       switch (task) {
-        case 'track_goals':
+        case "track_goals":
           result = await this.trackGoalProgress(context, traceId);
           break;
-        case 'monitor_budgets':
+        case "monitor_budgets":
           result = await this.monitorBudgets(context, traceId);
           break;
-        case 'detect_anomalies':
+        case "detect_anomalies":
           result = await this.detectAnomalies(context, traceId);
           break;
-        case 'generate_monthly_report':
+        case "generate_monthly_report":
           result = await this.generateMonthlyReport(context, traceId);
           break;
-        case 'check_alerts':
+        case "check_alerts":
           result = await this.checkAlerts(context, traceId);
           break;
         default:
@@ -169,31 +171,32 @@ export class MonitoringAgent extends BaseAgent {
 
     reasoning.push(`Tracking ${goals.length} financial goals`);
 
-    await this.recordReasoning('Analyzing goal progress', traceId);
+    await this.recordReasoning("Analyzing goal progress", traceId);
 
     for (const goal of goals) {
       const progress = this.calculateGoalProgress(goal, currentDate);
       progressReports.push(progress);
 
       reasoning.push(
-        `${goal.name}: ${progress.percentComplete.toFixed(1)}% complete, ${progress.onTrack ? 'ON TRACK' : 'BEHIND SCHEDULE'}`,
+        `${goal.name}: ${progress.percentComplete.toFixed(1)}% complete, ${progress.onTrack ? "ON TRACK" : "BEHIND SCHEDULE"}`,
       );
 
       // Generate alerts for goals that are off-track
       if (!progress.onTrack) {
-        const shortfall = progress.monthlyRequired - progress.currentMonthlyRate;
+        const shortfall =
+          progress.monthlyRequired - progress.currentMonthlyRate;
         alerts.push({
           id: `alert-goal-${goal.id}`,
-          type: 'goal_deviation',
-          severity: progress.deviation > 0.2 ? 'critical' : 'warning',
+          type: "goal_deviation",
+          severity: progress.deviation > 0.2 ? "critical" : "warning",
           title: `Goal Behind Schedule: ${goal.name}`,
           description: `Currently ${(progress.deviation * 100).toFixed(1)}% behind. Need to increase monthly savings by ₹${shortfall.toLocaleString()}.`,
           timestamp: currentDate,
           actionRequired: true,
           suggestedActions: [
             `Increase monthly savings by ₹${shortfall.toLocaleString()}`,
-            'Review and cut discretionary spending',
-            'Consider extending goal timeline',
+            "Review and cut discretionary spending",
+            "Consider extending goal timeline",
           ],
         });
       }
@@ -202,15 +205,15 @@ export class MonitoringAgent extends BaseAgent {
       if (progress.percentComplete > 90 && progress.percentComplete < 100) {
         alerts.push({
           id: `alert-goal-near-${goal.id}`,
-          type: 'opportunity',
-          severity: 'info',
+          type: "opportunity",
+          severity: "info",
           title: `Goal Almost Complete: ${goal.name}`,
           description: `You're ${progress.percentComplete.toFixed(1)}% of the way there! Just ₹${(goal.targetAmount - goal.currentAmount).toLocaleString()} to go.`,
           timestamp: currentDate,
           actionRequired: false,
           suggestedActions: [
-            'Maintain current savings rate',
-            'Plan celebration for achievement',
+            "Maintain current savings rate",
+            "Plan celebration for achievement",
           ],
         });
       }
@@ -226,7 +229,7 @@ export class MonitoringAgent extends BaseAgent {
       reasoning,
       [],
       0.9,
-      ['Review off-track goals weekly', 'Adjust budgets if needed'],
+      ["Review off-track goals weekly", "Adjust budgets if needed"],
     );
   }
 
@@ -254,7 +257,7 @@ export class MonitoringAgent extends BaseAgent {
     reasoning.push(`Monitoring ${budgets.length} category budgets`);
     reasoning.push(`Days remaining in month: ${daysRemaining}`);
 
-    await this.recordReasoning('Analyzing budget consumption', traceId);
+    await this.recordReasoning("Analyzing budget consumption", traceId);
 
     for (const budget of budgets) {
       const spent = budget.currentSpending || 0;
@@ -279,7 +282,7 @@ export class MonitoringAgent extends BaseAgent {
       budgetStatus.push(status);
 
       reasoning.push(
-        `${budget.category}: ${percentUsed.toFixed(1)}% used, ${projectedOverrun ? 'PROJECTED OVERRUN' : 'on track'}`,
+        `${budget.category}: ${percentUsed.toFixed(1)}% used, ${projectedOverrun ? "PROJECTED OVERRUN" : "on track"}`,
       );
 
       // Alert if budget is projected to overrun
@@ -287,8 +290,8 @@ export class MonitoringAgent extends BaseAgent {
         const dailyLimit = remaining / daysRemaining;
         alerts.push({
           id: `alert-budget-overrun-${budget.category}`,
-          type: 'budget_overrun',
-          severity: percentUsed > 100 ? 'critical' : 'warning',
+          type: "budget_overrun",
+          severity: percentUsed > 100 ? "critical" : "warning",
           title: `Budget Overrun Projected: ${budget.category}`,
           description: `Currently at ${percentUsed.toFixed(1)}% with ${daysRemaining} days left. Projected to exceed by ₹${(projectedSpend - limit).toLocaleString()}.`,
           timestamp: currentDate,
@@ -296,7 +299,7 @@ export class MonitoringAgent extends BaseAgent {
           suggestedActions: [
             `Limit daily spending to ₹${dailyLimit.toFixed(0)}`,
             `Cut non-essential ${budget.category} expenses`,
-            'Transfer funds from other categories if needed',
+            "Transfer funds from other categories if needed",
           ],
         });
       }
@@ -305,8 +308,8 @@ export class MonitoringAgent extends BaseAgent {
       if (percentUsed > 80 && !projectedOverrun) {
         alerts.push({
           id: `alert-budget-threshold-${budget.category}`,
-          type: 'budget_overrun',
-          severity: 'warning',
+          type: "budget_overrun",
+          severity: "warning",
           title: `Budget Alert: ${budget.category}`,
           description: `You've used ${percentUsed.toFixed(1)}% of your budget with ${daysRemaining} days remaining.`,
           timestamp: currentDate,
@@ -329,7 +332,7 @@ export class MonitoringAgent extends BaseAgent {
       reasoning,
       [],
       0.88,
-      ['Review high-burn categories', 'Adjust spending patterns'],
+      ["Review high-burn categories", "Adjust spending patterns"],
     );
   }
 
@@ -348,7 +351,7 @@ export class MonitoringAgent extends BaseAgent {
 
     reasoning.push(`Analyzing ${transactions.length} recent transactions`);
 
-    await this.recordReasoning('Detecting anomalies', traceId);
+    await this.recordReasoning("Detecting anomalies", traceId);
 
     for (const transaction of transactions) {
       const pattern = spendingPatterns.find(
@@ -364,16 +367,16 @@ export class MonitoringAgent extends BaseAgent {
       if (deviation > 1.0) {
         alerts.push({
           id: `alert-anomaly-${transaction.id}`,
-          type: 'anomaly',
-          severity: deviation > 2.0 ? 'critical' : 'warning',
+          type: "anomaly",
+          severity: deviation > 2.0 ? "critical" : "warning",
           title: `Unusual Spending Detected: ${transaction.category}`,
           description: `₹${transaction.amount.toLocaleString()} spent at ${transaction.merchant} - ${((deviation + 1) * 100).toFixed(0)}% above average (₹${pattern.averageAmount.toLocaleString()}).`,
           timestamp: new Date(transaction.date),
           actionRequired: true,
           suggestedActions: [
-            'Verify if this was a planned purchase',
-            'Check for unauthorized transactions',
-            'Update budget if this is a new recurring expense',
+            "Verify if this was a planned purchase",
+            "Check for unauthorized transactions",
+            "Update budget if this is a new recurring expense",
           ],
         });
 
@@ -383,17 +386,14 @@ export class MonitoringAgent extends BaseAgent {
       }
     }
 
-    await this.recordReasoning(
-      `Detected ${alerts.length} anomalies`,
-      traceId,
-    );
+    await this.recordReasoning(`Detected ${alerts.length} anomalies`, traceId);
 
     return this.createSuccessResponse(
       { alerts, anomalyCount: alerts.length },
       reasoning,
       [],
       0.85,
-      ['Review flagged transactions', 'Update fraud alerts if needed'],
+      ["Review flagged transactions", "Update fraud alerts if needed"],
     );
   }
 
@@ -405,7 +405,7 @@ export class MonitoringAgent extends BaseAgent {
     traceId?: string,
   ): Promise<AgentResponse> {
     const now = new Date();
-    const month = now.toLocaleString('default', { month: 'long' });
+    const month = now.toLocaleString("default", { month: "long" });
     const year = now.getFullYear();
 
     const income = context.monthlyIncome || 0;
@@ -418,9 +418,11 @@ export class MonitoringAgent extends BaseAgent {
     reasoning.push(`Generating report for ${month} ${year}`);
     reasoning.push(`Income: ₹${income.toLocaleString()}`);
     reasoning.push(`Expenses: ₹${expenses.toLocaleString()}`);
-    reasoning.push(`Savings: ₹${savings.toLocaleString()} (${savingsRate.toFixed(1)}%)`);
+    reasoning.push(
+      `Savings: ₹${savings.toLocaleString()} (${savingsRate.toFixed(1)}%)`,
+    );
 
-    await this.recordReasoning('Compiling monthly report', traceId);
+    await this.recordReasoning("Compiling monthly report", traceId);
 
     // Get top spending categories
     const topSpendingCategories = (context.spendingPatterns || [])
@@ -471,15 +473,12 @@ export class MonitoringAgent extends BaseAgent {
       recommendations,
     };
 
-    await this.recordReasoning('Monthly report generated', traceId);
+    await this.recordReasoning("Monthly report generated", traceId);
 
-    return this.createSuccessResponse(
-      { report },
-      reasoning,
-      [],
-      0.92,
-      ['Review report with family', 'Adjust next month's plan'],
-    );
+    return this.createSuccessResponse({ report }, reasoning, [], 0.92, [
+      "Review report with family",
+      "Adjust next month's plan",
+    ]);
   }
 
   /**
@@ -503,9 +502,9 @@ export class MonitoringAgent extends BaseAgent {
     allAlerts.push(...(anomalyDetection.result.alerts || []));
 
     // Group by severity
-    const critical = allAlerts.filter((a) => a.severity === 'critical');
-    const warnings = allAlerts.filter((a) => a.severity === 'warning');
-    const info = allAlerts.filter((a) => a.severity === 'info');
+    const critical = allAlerts.filter((a) => a.severity === "critical");
+    const warnings = allAlerts.filter((a) => a.severity === "warning");
+    const info = allAlerts.filter((a) => a.severity === "info");
 
     reasoning.push(`Total alerts: ${allAlerts.length}`);
     reasoning.push(`Critical: ${critical.length}`);
@@ -515,12 +514,16 @@ export class MonitoringAgent extends BaseAgent {
     return this.createSuccessResponse(
       {
         alerts: allAlerts,
-        summary: { critical: critical.length, warnings: warnings.length, info: info.length },
+        summary: {
+          critical: critical.length,
+          warnings: warnings.length,
+          info: info.length,
+        },
       },
       reasoning,
       [],
       0.9,
-      ['Address critical alerts immediately', 'Review warnings weekly'],
+      ["Address critical alerts immediately", "Review warnings weekly"],
     );
   }
 
@@ -549,7 +552,8 @@ export class MonitoringAgent extends BaseAgent {
     const onTrack = percentComplete >= percentTimeElapsed;
     const deviation = (percentTimeElapsed - percentComplete) / 100;
 
-    const monthlyRequired = (targetAmount - currentAmount) / (daysRemaining / 30);
+    const monthlyRequired =
+      (targetAmount - currentAmount) / (daysRemaining / 30);
     const currentMonthlyRate =
       daysElapsed > 0 ? (currentAmount / daysElapsed) * 30 : 0;
 

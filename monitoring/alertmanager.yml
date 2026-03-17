@@ -7,7 +7,7 @@
 
 global:
   resolve_timeout: 5m
-  slack_api_url: "${SLACK_WEBHOOK_URL:-https://hooks.slack.com/services/PLACEHOLDER}"
+  slack_api_url: "SLACK_WEBHOOK_PLACEHOLDER"
 
 route:
   receiver: slack-default
@@ -42,7 +42,7 @@ receivers:
 
   - name: pagerduty-critical
     pagerduty_configs:
-      - routing_key: "${PAGERDUTY_KEY:-PLACEHOLDER}"
+      - routing_key: "PAGERDUTY_KEY_PLACEHOLDER"
         severity: critical
         description: '{{ .CommonAnnotations.summary }}'
         details:

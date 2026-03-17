@@ -1,24 +1,31 @@
 # ML Services Dockerfile
-# Multi-stage build for Python ML services
+# Uses official PyTorch CUDA base image (Python 3.10 + PyTorch 2.2 + CUDA 12.1 pre-installed)
+# No local dependency installation needed — everything runs inside Docker
 
-FROM python:3.11-slim as base
+FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
 
-# Set working directory
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt .
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copy and install remaining requirements
+# Remove torch lines from requirements — already provided by the base image
+COPY requirements.txt .
+RUN grep -v '^torch' requirements.txt > requirements_notorch.txt \
+    && pip install --no-cache-dir -r requirements_notorch.txt \
+    && rm requirements_notorch.txt
 
 # Download spaCy model
 RUN python -m spacy download en_core_web_sm
@@ -33,12 +40,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run FastAPI server with Gunicorn process manager for production
+# Run FastAPI server
 # Workers configurable via WEB_CONCURRENCY env var (default: 2)
-CMD ["gunicorn", "model_server.app:app", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--workers", "2", \
-     "--bind", "0.0.0.0:8000", \
-     "--timeout", "120", \
-     "--keep-alive", "5", \
-     "--access-logfile", "-"]
+CMD ["sh", "-c", "exec gunicorn model_server.app:app --worker-class uvicorn.workers.UvicornWorker --workers ${WEB_CONCURRENCY:-2} --bind 0.0.0.0:8000 --timeout 120 --keep-alive 5 --access-logfile -"]

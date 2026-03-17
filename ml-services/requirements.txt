@@ -60,9 +60,9 @@ featuretools==1.30.0  # Automated feature engineering
 # ==========================================
 mlflow==2.10.2
 optuna==3.5.0
-evidently==0.4.13
-dvc==3.40.0  # Data versioning
-great-expectations==0.18.8  # Data validation
+evidently==0.4.17
+# dvc==3.40.0  # Data versioning — run in CI/pipelines, not in the API container
+# great-expectations==0.18.8  # Data validation — run in CI/pipelines, not in the API container
 
 # ==========================================
 # Model Serving & API
@@ -119,11 +119,10 @@ alembic==1.13.1  # Database migrations
 
 # ==========================================
 # Workflow Orchestration
+# NOTE: Apache Airflow is NOT installed here — it runs in the dedicated
+# airflow-webserver / airflow-scheduler Docker containers.
+# The ml-services code is mounted into those containers via volume.
 # ==========================================
-apache-airflow==2.8.1
-apache-airflow-providers-postgres==5.10.1
-apache-airflow-providers-redis==3.5.0
-apache-airflow-providers-http==4.7.0
 
 # ==========================================
 # Model Export & Optimization
@@ -152,12 +151,14 @@ aiofiles==23.2.1
 
 # ==========================================
 # Testing & Quality
+# NOTE: Test dependencies are NOT installed in the production container.
+# Run tests locally or in a separate test stage.
 # ==========================================
-pytest==8.0.0
-pytest-asyncio==0.23.4
-pytest-cov==4.1.0
-pytest-mock==3.12.0
-locust==2.20.1  # Load testing
+# pytest==8.0.0
+# pytest-asyncio==0.23.4
+# pytest-cov==4.1.0
+# pytest-mock==3.12.0
+# locust==2.20.1  # Load testing
 faker==22.6.0  # Generate test data
 
 # ==========================================

@@ -1,31 +1,36 @@
-import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
-import { Inject, Logger } from '@nestjs/common';
+import { CommandHandler, ICommandHandler, EventBus } from "@nestjs/cqrs";
+import { Inject, Logger } from "@nestjs/common";
 import {
   CreateTransactionCommand,
   UpdateTransactionCommand,
   DeleteTransactionCommand,
-} from '../transaction.commands';
+} from "../transaction.commands";
 import {
   ITransactionRepository,
   TRANSACTION_REPOSITORY,
-} from '../../../domain/repositories/transaction.repository.interface';
+} from "../../../domain/repositories/transaction.repository.interface";
 import {
   IAccountRepository,
   ACCOUNT_REPOSITORY,
-} from '../../../domain/repositories/account.repository.interface';
-import { Transaction, TransactionStatus } from '../../../domain/entities/transaction.entity';
-import { Money } from '../../../domain/value-objects/money.vo';
+} from "../../../domain/repositories/account.repository.interface";
+import {
+  Transaction,
+  TransactionStatus,
+  TransactionCategory,
+} from "../../../domain/entities/transaction.entity";
+import { Money } from "../../../domain/value-objects/money.vo";
 import {
   EntityNotFoundException,
   UnauthorizedException,
   ValidationException,
-} from '../../../../../core/exceptions/base.exception';
+} from "../../../../../core/exceptions/base.exception";
 import {
   TransactionCreatedEvent,
   TransactionUpdatedEvent,
-} from '../../../domain/events/transaction.events';
-import { KafkaProducerService } from '../../../../../core/messaging/kafka/kafka.producer';
-import { KafkaTopics } from '../../../../../core/messaging/kafka/topics.enum';
+} from "../../../domain/events/transaction.events";
+import { KafkaProducerService } from "../../../../../core/messaging/kafka/kafka.producer";
+import { KafkaTopics } from "../../../../../core/messaging/kafka/topics.enum";
+import { MlCategorizationService } from "../../../infrastructure/services/ml-categorization.service";
 
 @CommandHandler(CreateTransactionCommand)
 export class CreateTransactionHandler implements ICommandHandler<CreateTransactionCommand> {
@@ -38,7 +43,8 @@ export class CreateTransactionHandler implements ICommandHandler<CreateTransacti
     private readonly accountRepository: IAccountRepository,
     private readonly eventBus: EventBus,
     private readonly kafkaProducer: KafkaProducerService,
-  ) { }
+    private readonly mlCategorizationService: MlCategorizationService,
+  ) {}
 
   async execute(command: CreateTransactionCommand): Promise<Transaction> {
     this.logger.debug(`Creating transaction for account: ${command.accountId}`);
@@ -47,15 +53,15 @@ export class CreateTransactionHandler implements ICommandHandler<CreateTransacti
     const account = await this.accountRepository.findById(command.accountId);
 
     if (!account) {
-      throw new EntityNotFoundException('Account', command.accountId);
+      throw new EntityNotFoundException("Account", command.accountId);
     }
 
     if (account.UserId !== command.userId) {
-      throw new UnauthorizedException('Not authorized to access this account');
+      throw new UnauthorizedException("Not authorized to access this account");
     }
 
     if (!account.canTransact()) {
-      throw new ValidationException('Account is not active for transactions');
+      throw new ValidationException("Account is not active for transactions");
     }
 
     // Create money value object
@@ -63,16 +69,29 @@ export class CreateTransactionHandler implements ICommandHandler<CreateTransacti
 
     // Verify currency matches account
     if (amount.getCurrency() !== account.Balance.getCurrency()) {
-      throw new ValidationException('Transaction currency does not match account currency');
+      throw new ValidationException(
+        "Transaction currency does not match account currency",
+      );
     }
 
     // Create transaction entity
+    // Auto-categorize via ML service if no category was supplied
+    let category = command.category;
+    if (!category?.trim()) {
+      const ml = await this.mlCategorizationService.categorizeTransaction(
+        command.description ?? command.merchantName ?? "",
+        command.amount,
+      );
+      category = ml.category as TransactionCategory;
+      this.logger.debug(`Auto-categorised to: ${category}`);
+    }
+
     const transaction = Transaction.create({
       userId: command.userId,
       accountId: command.accountId,
       type: command.type,
       amount,
-      category: command.category,
+      category,
       description: command.description,
       transactionDate: command.transactionDate,
       merchantName: command.merchantName,
@@ -127,19 +146,23 @@ export class UpdateTransactionHandler implements ICommandHandler<UpdateTransacti
     private readonly transactionRepository: ITransactionRepository,
     private readonly eventBus: EventBus,
     private readonly kafkaProducer: KafkaProducerService,
-  ) { }
+  ) {}
 
   async execute(command: UpdateTransactionCommand): Promise<Transaction> {
     this.logger.debug(`Updating transaction: ${command.transactionId}`);
 
-    const transaction = await this.transactionRepository.findById(command.transactionId);
+    const transaction = await this.transactionRepository.findById(
+      command.transactionId,
+    );
 
     if (!transaction) {
-      throw new EntityNotFoundException('Transaction', command.transactionId);
+      throw new EntityNotFoundException("Transaction", command.transactionId);
     }
 
     if (transaction.UserId !== command.userId) {
-      throw new UnauthorizedException('Not authorized to update this transaction');
+      throw new UnauthorizedException(
+        "Not authorized to update this transaction",
+      );
     }
 
     // Apply updates
@@ -166,7 +189,8 @@ export class UpdateTransactionHandler implements ICommandHandler<UpdateTransacti
       }
     }
 
-    const updatedTransaction = await this.transactionRepository.save(transaction);
+    const updatedTransaction =
+      await this.transactionRepository.save(transaction);
 
     // Publish event
     const event = new TransactionUpdatedEvent(
@@ -195,19 +219,23 @@ export class DeleteTransactionHandler implements ICommandHandler<DeleteTransacti
   constructor(
     @Inject(TRANSACTION_REPOSITORY)
     private readonly transactionRepository: ITransactionRepository,
-  ) { }
+  ) {}
 
   async execute(command: DeleteTransactionCommand): Promise<void> {
     this.logger.debug(`Deleting transaction: ${command.transactionId}`);
 
-    const transaction = await this.transactionRepository.findById(command.transactionId);
+    const transaction = await this.transactionRepository.findById(
+      command.transactionId,
+    );
 
     if (!transaction) {
-      throw new EntityNotFoundException('Transaction', command.transactionId);
+      throw new EntityNotFoundException("Transaction", command.transactionId);
     }
 
     if (transaction.UserId !== command.userId) {
-      throw new UnauthorizedException('Not authorized to delete this transaction');
+      throw new UnauthorizedException(
+        "Not authorized to delete this transaction",
+      );
     }
 
     await this.transactionRepository.delete(command.transactionId);
